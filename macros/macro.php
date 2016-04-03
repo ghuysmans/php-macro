@@ -13,21 +13,30 @@ abstract class MacroProcessor {
 
 	public function process($text, &$errors) {
 		$matches = array();
-		$methods = get_class_methods(static::class);
-		$banned = array('process', 'getArguments', 'getCalls');
 		//on each iteration, get the innermost macro call
 		while ($this->getCalls($text, $matches)) {
+			//start from the end to keep valid offsets
 			foreach (array_reverse($matches) as $call) {
+				$message = null;
 				try {
 					$name = $call[1][0];
-					if (in_array($name, $banned) || !in_array($name, $methods))
-						throw new Exception("non-existing macro: $name");
+					$macro = new ReflectionMethod(static::class, $name);
+					if (!$macro->isProtected())
+						throw new Exception(
+							"$name isn't protected, hence not a macro");
 					$result = $this->$name($this->getArguments($call));
 				}
+				//TODO special exception for bad arguments, auto name
+				catch (ReflectionException $e) {
+					//let's avoid parentheses in the message...
+					$message = "the $name macro doesn't exist";
+				}
 				catch (Exception $e) {
-					$m = $e->getMessage();
-					$result = "<span class=\"macroerror\">$m</span>";
-					$errors[] = $e;
+					$message = $e->getMessage();
+				}
+				if ($message) {
+					$result = "<span class=\"macroerror\">$message</span>";
+					$errors[] = $message;
 				}
 				$text = substr_replace($text, $result,
 					$call[0][1], strlen($call[0][0]));
@@ -38,7 +47,7 @@ abstract class MacroProcessor {
 }
 
 class MyMacroProcessor extends MacroProcessor {
-	public function macro($_) {
+	protected function macro($_) {
 		return 'xxx';
 	}
 }
