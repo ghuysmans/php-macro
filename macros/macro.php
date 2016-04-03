@@ -2,8 +2,8 @@
 require_once('MacroProcessor.php');
 
 class MyMacroProcessor extends MacroProcessor {
-	protected function macro($_) {
-		return 'xxx';
+	protected function macro($args) {
+		return $args;
 	}
 }
 

@@ -1,9 +1,8 @@
 <?php
 abstract class MacroProcessor {
 	private function getArguments($args) {
-		//TODO split
-		//TODO strings lexing?
-		return $args;
+		//TODO string lexing?
+		return array_map('trim', explode(',', $args));
 	}
 
 	private function getCalls($text, &$calls) {
@@ -24,7 +23,7 @@ abstract class MacroProcessor {
 					if (!$macro->isProtected())
 						throw new Exception(
 							"$name isn't protected, hence not a macro");
-					$result = $this->$name($this->getArguments($call));
+					$result = $this->$name($this->getArguments($call[2][0]));
 				}
 				//TODO special exception for bad arguments, auto name
 				catch (ReflectionException $e) {
